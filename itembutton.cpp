@@ -56,6 +56,27 @@ void ItemButton::setGreenButton()
     update();
 }
 
+void ItemButton::setEgg()
+{
+    delete m_pixmap;
+    m_pixmap = new QPixmap(QString(PATH)+"aggs/aggB1.png");
+    update();
+}
+
+void ItemButton::setSolonka()
+{
+    delete m_pixmap;
+    m_pixmap = new QPixmap(QString(PATH)+"solonka.png");
+    update();
+}
+
+void ItemButton::setCap()
+{
+    delete m_pixmap;
+    m_pixmap = new QPixmap(QString(PATH)+"1.png");
+    update();
+}
+
 void ItemButton::setRedButton()
 {
     delete m_pixmap;

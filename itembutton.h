@@ -29,6 +29,9 @@ public:
     void setRedButton();
     void setErrorButton();
     void setSmileButton();
+    void setEgg();
+    void setSolonka();
+    void setCap();
     int getNumber(){return m_number;}
 signals:
   void signalPressEvent(int);

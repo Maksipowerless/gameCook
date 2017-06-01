@@ -7,6 +7,9 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    lvlDone =0;
+    steps =0;
+    points = 8;
     isEnableToClickButton = true;
     qsrand (QDateTime::currentMSecsSinceEpoch());
     showFullScreen();
@@ -48,7 +51,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     te_rules = new QTextEdit;
     te_rules->setGeometry(500,160,300,400);
-    te_rules->setText("Тебе необходимо приготовить блюдо по рецепту. На каждом этапе тебе будет предложена мини игра. Выигрывай их и зарабатывай очки. Посмотрим на что ты способен");
+    te_rules->setText("Здравствуй, юный повар! Покажи как хорошо ты готовишь. Проходи мини игры. Для каждой написаны свои правила. Для того, чтобы выбрать мини-игру "
+                      "кликай на предметы кухни. Удачи!!");
     sceneKitchen->addWidget(b_rules);
     sceneKitchen->addWidget(te_rules);
     te_rules->hide();
@@ -114,9 +118,56 @@ void MainWindow::generateSceneStove()
 
     qreal x=300, y=300, h = 700, w = 500;
     QRectF r(x,y,h,w);
-    ItemPan* pan = new ItemPan(r);
+    pan = new ItemPan(r);
     sceneStove->addItem(pan);
     pan->moveBy(10,70);
+
+    agg1 = new ItemButton(r,1);
+    sceneStove->addItem(agg1);
+    agg1->setEgg();
+    agg1->moveBy(500,0);
+
+    agg2 = new ItemButton(r,1);
+    sceneStove->addItem(agg2);
+    agg2->setEgg();
+    agg2->moveBy(540,40);
+
+    QRectF rect(460,250,380,327);
+    sold = new ItemButton(rect,1);
+    sceneStove->addItem(sold);
+    sold->setSolonka();
+    sold->moveBy(500,250);
+
+    rect = QRectF(460,250,350,350);
+    cap = new ItemButton(rect,1);
+    sceneStove->addItem(cap);
+    cap->setCap();
+    cap->moveBy(400,500);
+
+    tim_Stove = new QTimer();
+    tim_Stove->setInterval(2000);
+    connect(tim_Stove, SIGNAL(timeout()), this, SLOT (s_timStove()));
+
+    b_startStove = new QPushButton("СТАРТ");
+    b_startStove->setGeometry(1087,20,200,50);
+    sceneStove->addWidget(b_startStove);
+    connect(b_startStove, SIGNAL(clicked()), this, SLOT(s_clickStart()));
+
+    b_stoveOn = new QPushButton("ВКЛ плиту");
+    b_stoveOn->setGeometry(1087,260,200,50);
+    sceneStove->addWidget(b_stoveOn);
+
+    b_stoveOff = new QPushButton("ВЫКЛ плиту");
+    b_stoveOff->setGeometry(1087,320,200,50);
+    sceneStove->addWidget(b_stoveOff);
+
+    b_fireMedium = new QPushButton("Средний огонь");
+    b_fireMedium->setGeometry(1087,380,200,50);
+    sceneStove->addWidget(b_fireMedium);
+
+    b_fireHard = new QPushButton("Сильный огонь");
+    b_fireHard->setGeometry(1087,440,200,50);
+    sceneStove->addWidget(b_fireHard);
 }
 
 void MainWindow::generateSceneOven()
@@ -149,10 +200,9 @@ void MainWindow::generateSceneOven()
                 SLOT(s_checkSequenceOfClickedButton()));
 
     b_startShineButtons = new QPushButton("СТАРТ");
-    b_startShineButtons->setGeometry(415,600,150,50);
+    b_startShineButtons->setGeometry(1087,20,200,50);
     connect(b_startShineButtons, SIGNAL(clicked()), this, SLOT(s_startTimerShineButtons()));
     sceneOven->addWidget(b_startShineButtons);
-
 
     tim_toggleButtonsGreen = new QTimer();
     tim_toggleButtonsGreen->setInterval(800);
@@ -196,6 +246,38 @@ void MainWindow::levelDone(QString str)
     view->setScene(sceneKitchen);
 }
 
+void MainWindow::gameDone()
+{
+    sceneKitchen->addPixmap(QPixmap(QString(PATH)+"curtain.jpg"));
+    QFont f("Times",100);
+    QString str("Ты прошел игру! \n");
+
+    if(points > 5)
+    {
+        str+= QString("Ты большой молодец!");
+    }
+    else if(points > 2)
+    {
+         str+= QString("Ты неплохо справился!");
+    }
+    else
+    {
+        str+= QString("Ты можешь и лучше!");
+    }
+
+    QGraphicsTextItem* text = sceneKitchen->addText(str);
+    text->moveBy(30,100);
+    text->setFont(f);
+
+    delete b_quit;
+    delete b_startGame;
+    delete b_rules;
+    b_quit = new QPushButton("ВЫХОД");
+    b_quit->setGeometry(550,500,200,100);
+    sceneKitchen->addWidget(b_quit);
+    connect(b_quit, SIGNAL(clicked()), QApplication::instance(), SLOT(quit()));
+}
+
 ///////////////////// slots ////////////////////////////
 
 void MainWindow::s_setLabelTextOnHoverEnterEvent()
@@ -237,10 +319,25 @@ void MainWindow::s_setNewScene()
     if(str == vectorOfRectsF[0].second)
     {
         view->setScene(sceneOven);
+
+        delete te_commands;
+        te_commands = new QTextEdit;
+        te_commands->setGeometry(1050,100, 290, 130);
+        te_commands->setText("В этой мини-игре тебе нужно запоминать очердность нажатия кнопок. После нажатия на кнопку СТАРТ 5 кнопок будут подсвечиваться. Нажимай их в такой же последовательности. Удачи!");
+        te_commands->setReadOnly(true);
+        sceneOven->addWidget(te_commands);
     }
     else if(str == vectorOfRectsF[1].second)
     {
         view->setScene(sceneStove);
+
+        delete te_commands;
+        te_commands = new QTextEdit;
+        te_commands->setGeometry(1050,100, 290, 130);
+        te_commands->setText("Cледуй инструкции, которая будет появляться в этом окошке. Для начала мини-игры нажми старт.");
+        te_commands->setReadOnly(true);
+        sceneStove->addWidget(te_commands);
+
     }
     else if(str == vectorOfRectsF[2].second)
     {
@@ -257,13 +354,42 @@ void MainWindow:: s_startTimerShineButtons()
 {
     if(sequenceOfNumbersButtons.isEmpty())
     {
+        b_startShineButtons->hide();
         sequenceOfNumbersButtons.clear();
         isEnableToClickButton = false;
         for(int i=0; i< vectorOfOvenButtons.size(); i++)
-           vectorOfOvenButtons[i]->setNoClicked();
+            vectorOfOvenButtons[i]->setNoClicked();
 
         tim_toggleButtonsGreen->start();
     }
+}
+
+void MainWindow::s_timStove()
+{
+    switch (steps) {
+    case 1:
+        te_commands->setText(te_commands->toPlainText() + QString("Поставь сильный огонь"));
+        break;
+    case 2:
+        te_commands->setText(te_commands->toPlainText() + QString("Посоли воду"));
+        break;
+    case 3:
+        te_commands->setText(te_commands->toPlainText() + QString("Закинь яйца"));
+        break;
+    case 5:
+        te_commands->setText(te_commands->toPlainText() + QString("Закрой крышкой"));
+        break;
+    case 6:
+        te_commands->setText(te_commands->toPlainText() + QString("Поставь средний огонь"));
+        break;
+    case 7:
+        te_commands->setText(te_commands->toPlainText() + QString("Выключи плиту"));
+        break;
+    default:
+        break;
+    }
+
+    tim_Stove->stop();
 }
 
 //добавляет в вектор номера кнопок(5), перекрашивает их в красный, запускает таймер для перекраски в зеленый
@@ -298,7 +424,7 @@ void MainWindow:: s_toggleButtonsRed()
 void MainWindow::s_checkSequenceOfClickedButton()
 {
     int number = 0;
-    if(isEnableToClickButton)
+    if(isEnableToClickButton && sequenceOfNumbersButtons.isEmpty() == false)
     {
         for(int i=0; i<vectorOfOvenButtons.size(); i++)
         {
@@ -325,6 +451,8 @@ void MainWindow::s_checkSequenceOfClickedButton()
             msBox.setWindowTitle("УПС");
             msBox.setText("ПОПРОБУЙ ЕЩЕ РАЗ ...");
             msBox.exec();
+            b_startShineButtons->show();
+            points--;
             return;
         }
 
@@ -333,6 +461,9 @@ void MainWindow::s_checkSequenceOfClickedButton()
         {
             tim_setRedButtons->start();
             levelDone("Духовка");
+            lvlDone++;
+            if(lvlDone == 2)
+                gameDone();
         }
     }
 }
@@ -342,6 +473,110 @@ void MainWindow::s_setRedButtons()
     for(int i=0; i< vectorOfOvenButtons.size(); i++)
         vectorOfOvenButtons[i]->setRedButton();
     tim_setRedButtons->stop();
+}
+
+void MainWindow::s_clickStart()
+{
+    b_startStove->hide();
+    te_commands->setText("Включи плиту");
+    connect(b_stoveOn, SIGNAL(clicked()), this, SLOT(s_events()));
+
+}
+
+//проверет очередность событий
+void MainWindow::s_events()
+{
+    if(steps == 0 && te_commands->toPlainText().contains("Включи плиту"))
+    {    
+        setGreenButton(b_stoveOn);
+        steps++;
+        disconnect(b_stoveOn, SIGNAL(clicked()), this, SLOT(s_events()));
+        tim_Stove->start();
+        te_commands->setText(te_commands->toPlainText() + QString(" (сделано)\n"));
+        connect(b_fireHard, SIGNAL(clicked()), this, SLOT(s_events()));
+
+        return;
+    }
+
+    if(steps == 1 && te_commands->toPlainText().contains("Поставь сильный огонь"))
+    {
+        setGreenButton(b_fireHard);
+        steps++;
+        disconnect(b_fireHard, SIGNAL(clicked()), this, SLOT(s_events()));
+        tim_Stove->start();
+        te_commands->setText(te_commands->toPlainText() + QString(" (сделано)\n"));
+        pan->setHardFire();
+        connect(sold, SIGNAL(signalPressEvent(int)), this, SLOT(s_events()));
+
+        return;
+    }
+
+    if(steps == 2 && te_commands->toPlainText().contains("Посоли воду"))
+    {
+        steps++;
+        delete sold;
+        tim_Stove->start();
+        te_commands->setText(te_commands->toPlainText() + QString(" (сделано)\n"));
+        pan->setStaticBubles();
+        connect(agg2, SIGNAL(signalPressEvent(int)), this, SLOT(s_events()));
+
+        return;
+    }
+
+    if(steps == 3 && te_commands->toPlainText().contains("Закинь яйца"))
+    {
+        steps++;
+        delete agg2;
+        pan->setBubles();
+        connect(agg1, SIGNAL(signalPressEvent(int)), this, SLOT(s_events()));
+        pan->setAggW();
+        return;
+    }
+
+    if(steps == 4 && te_commands->toPlainText().contains("Закинь яйца"))
+    {
+        steps++;
+        tim_Stove->start();
+        delete agg1;
+        te_commands->setText(te_commands->toPlainText() + QString(" (сделано)\n"));
+        pan->setVapor();
+        pan->setAggB();
+        connect(cap, SIGNAL(signalPressEvent(int)), this, SLOT(s_events()));
+        return;
+    }
+
+    if(steps == 5 && te_commands->toPlainText().contains("Закрой крышкой"))
+    {
+        steps++;
+        te_commands->setText(te_commands->toPlainText() + QString(" (сделано)\n"));
+        pan->setCap();
+        tim_Stove->start();
+        connect(b_fireMedium, SIGNAL(clicked()), this, SLOT(s_events()));
+        delete cap;
+        return;
+    }
+    if(steps == 6 && te_commands->toPlainText().contains("Поставь средний огонь"))
+    {
+        setGreenButton(b_fireMedium);
+        steps++;
+        te_commands->setText(te_commands->toPlainText() + QString(" (сделано)\n"));
+        tim_Stove->start();
+        pan->setMediumFire();
+        disconnect(b_fireMedium, SIGNAL(clicked()), this, SLOT(s_events()));
+        connect(b_stoveOff, SIGNAL(clicked()), this, SLOT(s_events()));
+        return;
+    }
+    if(steps == 7 && te_commands->toPlainText().contains("Выключи плиту"))
+    {
+        setGreenButton(b_stoveOff);
+        te_commands->setText(te_commands->toPlainText() + QString(" (сделано)\n"));
+        pan->setLowFire();
+        levelDone("Плита");
+        lvlDone++;
+        if(lvlDone == 2)
+            gameDone();
+    }
+
 }
 
 void MainWindow::s_moveCurtain()
@@ -384,4 +619,11 @@ void MainWindow::s_getBack()
 void MainWindow:: createRectangle(QPolygon& poly,const int x, const int y, const int w, const int h){
     //метод рисует прямоугольник poly с началоа в точке (x,y) с длиной w и высотой h
     poly << QPoint(x,y) << QPoint(x+w,y)<< QPoint(x+w,y+h)<< QPoint(x,y+h)<< QPoint(x,y);
+}
+
+void MainWindow::setGreenButton(QPushButton* btn)
+{
+    QPalette myPalette = btn->palette();
+    myPalette.setColor( btn->backgroundRole(), QColor(0,250,0) );
+    btn->setPalette(myPalette);
 }
